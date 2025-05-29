@@ -82,9 +82,6 @@ body, html {
 ul {
     list-style-type: none;
 }
-li{
-    padding-bottom: 1em;
-}
 .chart-container{
     position: relative; 
     height:40vh; 
