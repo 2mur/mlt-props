@@ -1,0 +1,227 @@
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>MTL REAL ESTATE</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css"> <!-- Link to external CSS -->
+
+  </head>
+
+  <body>
+    <h1 class="map-title"> Montreal Properties Stats <span class="map-title-span"> - by t </span></h1>
+    <div id="map" onclick="closePopup()"></div>
+
+    <div id="chart-popup">
+      <button onclick="closePopup()" class="exit-popup-button">✖</button>
+      <h1 id="popup-title"></h1>
+      <div id='chart-area' >
+        <div id="popup-details"></div>
+
+        <div class="chart-container">
+            <canvas id="chart-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+      let chartInstance = null;
+
+      function getLabels(){
+        return ['$0.0M-0.25M', '$0.25M-0.5M', '$0.5M-0.75M', '$0.75M-1.0M', '$1.0M-1.25M', '$1.25M-1.5M', '$1.5M-1.75M', '$1.75M-2.0M', '$2.0M-2.25M', '$2.25M-2.5M', 
+          '$2.5M-2.75M', '$2.75M-3.0M', '$3.0M-3.25M', '$3.25M-3.5M', '$3.5M-3.75M', '$3.75M-4.0M', '$4.0M-4.25M', '$4.25M-4.5M', '$4.5M-4.75M', '$4.75M-5.0M', '$5.0M-5.25M', 
+          '$5.25M-5.5M', '$5.5M-5.75M', '$5.75M-6.0M', '$6.0M-6.25M', '$6.25M-6.5M', '$6.5M-6.75M', '$6.75M-7.0M', '$7.0M-7.25M', '$7.25M-7.5M', '$7.5M-7.75M', '$7.75M-8.0M', 
+          '$8.0M-8.25M', '$8.25M-8.5M', '$8.5M-8.75M', '$8.75M-9.0M', '$9.0M-9.25M', '$9.25M-9.5M', '$9.5M-9.75M', '$9.75M-10.0M', '>$10.0M']
+      }
+
+      async function getChartData(name, ctype){
+        const res = await fetch('price_distribution.json');
+        const data = await res.json();
+        return data[name][ctype];
+      }
+
+      function renderRegionData(properties) {
+        const list = `
+            <div class="desc-container">
+              <div>
+                <ul>
+                  <li>Condos <span id='psd'>(n=${properties.condoscount || null})</span></li>
+                  <li>Houses <span id='psd'>(n=${properties.housescount || null})</span></li>
+                  <li>Plexes <span id='psd'>(n=${properties.plexescount || null})</span></li>
+                  <li>Land <span id='psd'>(n=${properties.landcount || null})</span></li>
+                </ul>
+              </div>
+              <div>
+                <ul>
+                  <li>Avg Price: <span id='prsd'>$${properties.condosap ? properties.condosap.toFixed(0) : null}</span> </li>
+                  <li>Avg Price: <span id='prsd'>$${properties.housesap ? properties.housesap.toFixed(0) : null}</span> </li>
+                  <li>Avg Price: <span id='prsd'>$${properties.plexesap ? properties.plexesap.toFixed(0) : null}</span> </li>
+                  <li>Avg Price: <span id='prsd'>$${properties.landap ? properties.landap.toFixed(0) : null}</span> </li>
+                </ul>
+              </div>
+              <div>
+                <ul>
+                  <li><span id='psd'>($${properties.condosapsqft ? properties.condosapsqft.toFixed(0) : null}/sqrt)</span></li>
+                  <li><span id='psd'>($${properties.housesapsqft ? properties.housesapsqft.toFixed(0) : null}/sqrt)</span></li>
+                  <li><span id='psd'>($${properties.plexesapsqft ? properties.plexesapsqft.toFixed(0) : null}/sqrt)</span></li>
+                  <li><span id='psd'>($${properties.landapsqft ?  properties.landapsqft.toFixed(0) : null}/sqrt)</span></li>
+                </ul>
+              </div>
+            </div>
+            <p style='padding-left:2em;'>Price Distributions</p>
+            <div class="chart-toggle-buttons">
+              <button onclick="updateChart('${properties.NOM || null}','housespricedist')">Houses</button>
+              <button onclick="updateChart('${properties.NOM || null}','condospricedist')">Condos</button>
+              <button onclick="updateChart('${properties.NOM || null}','plexespricedist')">Plexes</button>
+              <button onclick="updateChart('${properties.NOM || null}','pricedist')">All</button>
+            </div>
+            `;
+        return list
+      }
+      async function updateChart(region, ctype) {
+        const dataArray = await getChartData(region, ctype);
+        const labels = getLabels('pricedist');
+
+        chartInstance.data.labels = labels;
+        chartInstance.data.datasets[0].data = dataArray;
+        chartInstance.update();
+      }
+
+
+      async function showPopup(properties) {
+
+        document.getElementById('popup-title').textContent = properties.NOM;
+        document.getElementById('popup-details').innerHTML = renderRegionData(properties);
+        document.getElementById('chart-popup').style.display = 'block';
+
+        const dataArray = await getChartData(properties.NOM, 'pricedist');
+
+        const ctx = document.getElementById('chart-canvas').getContext('2d');
+
+        const price_dist = {
+          labels: getLabels('pricedist'),
+          datasets: [{
+            label: 'n',
+            data: dataArray, 
+            backgroundColor: 'rgba(255, 134, 13, 0.4)',
+            borderColor: 'rgba(255, 134, 13, 0.7)',
+            borderWidth: 2,
+            borderRadius: 4
+          }]
+        };
+
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+          type: 'bar',
+          data: price_dist,
+          options: {
+            color	: 'rgba(255, 255, 255,0.8)',
+            responsive: true,
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {color	: 'rgba(255, 255, 255,0.2)'}
+              },
+              x: {grid: {color	: 'rgba(255, 255, 255,0.2)'}}
+            }
+          }
+        });
+      }
+
+      function closePopup() {
+        document.getElementById('chart-popup').style.display = 'none';
+        if (chartInstance) chartInstance.destroy();
+      }
+      </script>
+
+      <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+      <script>
+        //MAP CODE
+        function getColorPrice(value) {
+          return value > 2000000 ? '#fa5b05' :
+                value > 1500000  ? '#fa7305' :
+                value > 1000000  ? '#fa8c05' :
+                value > 1000000  ? '#faa005' :
+                value > 750000   ? '#fab905' :
+                value > 500000   ? '#fad105' :'#fcf09f';
+        }
+        function getColorPriceSQFT(value) {
+          return value > 900 ? '#fa5b05' :
+                value > 700  ? '#fa7305' :
+                value > 500  ? '#fa8c05' :
+                value > 300  ? '#faa005' :
+                value > 200   ? '#fab905' :
+                value > 100   ? '#fad105' :'#fcf09f';
+        }
+        const map = L.map('map', { zoomControl: false }).setView([45.5, -73.6]); // Montreal center
+        map.setZoom(12); 
+        const montrealBounds = L.latLngBounds(
+            [45.40, -74.25], // Southwest corner
+            [45.71, -73.25]  // Northeast corner
+        );
+        // Initial zoom to island
+        map.setMaxBounds(montrealBounds);    // Lock view inside bounds
+        map.setMinZoom(12);       // Prevent zooming out beyond current view
+        map.setMaxZoom(14);
+
+        fetch('mtl.geojson').then(res => res.json()).then(geojsonData => {
+            const geobackground = L.geoJSON(geojsonData, { 
+              style: {
+                color: 'gray', 
+                weight: 0.5, 
+                dashArray: "4, 4",
+                fillOpacity: 0.0
+              }
+            }).addTo(map);
+          });
+
+        // Load your GeoJSON (replace with your file or URL)
+        fetch('mtl-stats.geojson')
+          .then(res => res.json())
+          .then(geojsonData => {
+        
+            function onEachFeature(feature, layer){
+              layer.setStyle({
+                    fillColor: getColorPriceSQFT(feature.properties.apsqft),
+                    weight: 1,
+                    fillOpacity: 0.0,
+                    color:'orange',
+              });
+
+              const name = feature.properties.NOM || "Unnamed";
+              const sqft = feature.properties.apsqft;
+
+              const center = layer.getBounds().getCenter();
+              
+              layer.on('click', (e) => {
+                  map.fitBounds(layer.getBounds());
+                  showPopup(e.target.feature.properties);
+              });
+
+              layer.on('mouseover', () => {
+                  layer.setStyle({ fillOpacity: 0.6, fillColor: getColorPriceSQFT(feature.properties.apsqft), weight: 3});
+                  const tooltip = L.tooltip({
+                          permanent: true,
+                          direction: 'center',
+                          className: 'region-tooltip',
+                          offset: [0, 0],
+                          opacity: 0.8
+                      }).setLatLng(center).setContent( `${name} </br> $${sqft}/sqft`);
+
+                  layer.bindTooltip(tooltip).openTooltip();
+              });
+
+              layer.on('mouseout', () => {
+                  layer.setStyle({ fillOpacity: 0.0, fillColor: getColorPriceSQFT(feature.properties.apsqft), weight: 1 });
+                  layer.closeTooltip();
+              });
+            }
+            const geojsonLayer = L.geoJSON(geojsonData, {onEachFeature: onEachFeature}).addTo(map);
+          });
+    </script>
+  </body>
+  </html>

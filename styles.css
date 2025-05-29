@@ -1,0 +1,116 @@
+body, html { 
+    margin: 0; 
+    padding: 0; 
+    height: 100%; 
+}
+#map { 
+    height: 100%; 
+    background: #242424; 
+}
+.region-tooltip {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    color: rgb(255, 255, 255);
+    font-size: 20px;
+    font-weight: bold;
+    font-family: monospace;
+    text-align: center;
+}
+.map-title {
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    font-size: 30px;
+    font-weight: bold;
+    font-family: monospace;
+    background-color: transparent; /* transparent dark background */
+    color: rgb(255, 255, 255);
+    border-radius: 5px;
+    z-index: 1001;
+}
+.map-title-span{
+    font-size: 20px;
+    font-weight: bold;
+    font-family: monospace;
+    background-color: transparent; /* transparent dark background */
+    color: rgb(91, 91, 91);
+}
+#chart-popup{
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 20, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    z-index: 9999;
+    color: rgb(255, 255, 255);
+    width: 60%;
+    height: 80%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6);
+}
+.exit-popup-button{
+    float: right;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+#popup-title{
+    font-family: monospace; font-size:20px;
+}
+#chart-canvas{
+    background-color: transparent;
+}
+#popup-details {
+    font-family: monospace; font-size: 20px;
+}
+#psd {
+    font-family: monospace; font-size: 15px; color: gray ; font-weight: normal;
+}
+#prsd {
+    font-family: monospace; font-size: 15px; color: rgba(255, 158, 54, 0.7) ; font-weight: normal;
+}
+#chart-area{
+    display: grid;
+}
+ul {
+    list-style-type: none;
+}
+li{
+    padding-bottom: 1em;
+}
+.chart-container{
+    position: relative; 
+    height:40vh; 
+    width:60vw;
+    padding-left:2em;
+    padding-top:1em;
+}
+.desc-container{
+    display:flex;
+}
+.chart-toggle-buttons {
+    display: flex;
+    justify-content: left;
+    gap: 1em;
+    padding-left: 2em;
+}
+.chart-toggle-buttons button{
+    background-color: transparent;
+    border-color: #ff8c1a;
+    font-family: monospace;
+    padding: 1em 2em 1em 2em;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 17px;
+}
+.chart-toggle-buttons button:hover {
+    background-color: #ff8c1a;
+}
